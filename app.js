@@ -5,6 +5,7 @@ const options = require("./options.json");
 const fs = require("fs");
 const path = require("path");
 
+const pluginLoader = require("./pluginLoader.js");
 var plugins;
 console.log(options);
 
@@ -13,15 +14,13 @@ try {
     var bot = new Discord.Client();
     bot.login(options.token).catch(error => { console.log("Error logging in"); return; });
 
-    plugins = getPlugins();
-
+    plugins = reloadPlugins();
 } catch (error) {
     console.log(error);
 }
 
 function reloadPlugins() {
-    plugins = null;
-    plugins = getPlugins();
+    plugins = pluginLoader.getPlugins();
     console.log(plugins);
 }
 
@@ -58,30 +57,4 @@ function messageHandler(message) {
     }
 
     if (plugins.hasOwnProperty(command)) plugins[command].process(message);
-}
-
-/* Plugin Loader */
-
-function getDirectories(srcpath) {
-    return fs.readdirSync(srcpath)
-        .filter(file => fs.statSync(path.join(srcpath, file)).isDirectory())
-}
-
-function getPlugins() {
-    let pluginNames = getDirectories(`${__dirname}/plugins/`);
-    console.log(pluginNames);
-    let pluginsObj = {};
-    if (pluginNames.length != 0) {
-        console.log(`Installed Plugins: ${pluginNames}`);
-        for (i = 0; i < pluginNames.length; i++) {
-            require("fs").readdirSync(`${__dirname}/plugins/${pluginNames[i]}`).forEach(function (file) {
-                let name = pluginNames[i];
-                pluginsObj[name] = require(`${__dirname}/plugins/${pluginNames[i]}/${file}`);
-            });
-        }
-        return pluginsObj;
-    } else {
-        console.log("Error: No plugins installed!");
-        return false;
-    }
 }
